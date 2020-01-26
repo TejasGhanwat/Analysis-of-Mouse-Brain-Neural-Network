@@ -1,0 +1,481 @@
+---
+title: "Project"
+author: "Tejas"
+date: "6 April 2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+#Importing Libraries
+```{r}
+library(igraph)
+library(centiserve)
+library(ggplot2)
+library(meaRtools)
+library(roots)
+library(MetaIntegrator)
+
+```
+#Reading C. Elegans Worm Data
+```{r}
+celegans_other<- read.csv("C:/Users/Tejas/Documents/celegans_n306.txt", 
+                          header = F, sep = " ", dec = " ")
+names(celegans_other) <- c("Sample.Name", "Marker", "Size")
+G <- graph.data.frame(celegans_other)
+```
+
+
+
+```{r}
+plot(degree.distribution(G), pch=20, cex=1, col="brown", 
+     xlab="node degree ",
+ylab = "probability ", 
+main = "Degree distribution of C. elegans Neural Network")
+lines(degree_distribution(G))
+```
+
+#Degree of Nodes
+```{r}
+G.degrees <- degree(G)
+print(G.degrees)
+```
+
+```{r}
+
+clust<- transitivity(G, type="weighted")
+plot(clust, pch=20, cex=1, col="blue", 
+     xlab="No. of Nodes ",
+ylab = "Clistering Coefficient ", 
+main = "C. ELegans Clustering Coefficient Distribution", type="b")
+lines(clust)
+```
+
+#List of Cores
+
+```{r}
+cores = coreness(G)
+print(cores)
+```
+
+
+```{r}
+plot(cores, col="blue", xlab="Nodes",ylab = "Cores ",
+     main = "C.Elegans Worm K-Core Distribution", type = "h")
+lines(cores)
+```
+
+
+
+
+```{r}
+CorenessLayout <- function(G) {
+coreness <- graph.coreness(G);
+xy <- array(NA, dim=c(length(coreness), 2));
+ 
+shells <- sort(unique(coreness));
+for(shell in shells) {
+v <- 1 - ((shell-1) / max(shells));
+nodes_in_shell <- sum(coreness==shell);
+angles <- seq(0,360,(360/nodes_in_shell));
+angles <- angles[-length(angles)]; # remove last element
+xy[coreness==shell, 1] <- sin(angles) * v;
+xy[coreness==shell, 2] <- cos(angles) * v;
+}
+return(xy);
+}
+ 
+# g is the network
+# compute coreness
+coreness <- graph.coreness(G);
+# assign colors
+colbar <- rainbow(max(coreness));
+# create layout
+ll <- CorenessLayout(G);
+# plot
+plot(G, layout=ll, vertex.size=20, 
+     vertex.color=colbar[coreness], 
+     vertex.frame.color=colbar[coreness], 
+     main='C. Elegans Worm Coreness');
+```
+```{r}
+plot(G, main = "Original C. Elegans Worm Network Visualization")
+```
+
+#Rewiring of Worm Network
+
+
+```{r}
+keeping_degseq(loops = FALSE, niter = 8000)
+g <- G
+g %>%
+  rewire(keeping_degseq(niter = 8000)) %>%
+  degree()
+
+str(rewire(g, with = keeping_degseq(niter = vcount(g) * 10)))
+plot
+```
+```{r}
+plot(g, main="Rewired C. Elegans Network Visualization ")
+```
+
+
+#Reading Mouse brain Neural Network
+
+```{r}
+library(igraph)
+mouse_raw<- read.csv("C:\\Users\\Tejas\\Documents\\bn-mouse_brain_1.edges", 
+                     header = F, sep = " ", dec = " ")
+mouse<-read.graph("C:\\Users\\Tejas\\Documents\\bn-mouse_brain_1.edges","edgelist")
+mouse<- simplify(mouse, remove.multiple = TRUE, 
+                 remove.loops = TRUE,
+  edge.attr.comb = igraph_opt("edge.attr.comb"))
+any(which_multiple(mouse))
+E(mouse)$weight
+
+is_simple(mouse)
+```
+
+
+```{r}
+
+
+plot(degree.distribution(mouse), pch=20, cex=1, 
+     col="green", xlab="node degree ",
+ylab = "probability ", main = "Degree distribution of Mouse Brain Neural Network")
+lines(degree_distribution(mouse))
+
+```
+
+# Degrees of Nodes
+
+```{r}
+mouse.degrees <- degree(G)
+print(mouse.degrees)
+```
+#List of Cores
+```{r}
+cores_mouse = coreness(mouse)
+print(cores_mouse)
+```
+
+
+
+```{r}
+plot(cores_mouse, pch=2, cex=0.5, 
+     col="red", xlab="Index",
+ylab = "Cores ", main = "Mouse K-Core Distribution")
+lines(cores_mouse)
+```
+
+
+
+```{r}
+CorenessLayout <- function(mouse) {
+coreness <- graph.coreness(mouse);
+xy <- array(NA, dim=c(length(coreness), 2));
+ 
+shells <- sort(unique(coreness));
+for(shell in shells) {
+v <- 1 - ((shell-1) / max(shells));
+nodes_in_shell <- sum(coreness==shell);
+angles <- seq(0,360,(360/nodes_in_shell));
+angles <- angles[-length(angles)]; # remove last element
+xy[coreness==shell, 1] <- sin(angles) * v;
+xy[coreness==shell, 2] <- cos(angles) * v;
+}
+return(xy);
+}
+ 
+# g is the network
+# compute coreness
+coreness <- graph.coreness(mouse);
+# assign colors
+colbar <- rainbow(max(coreness));
+# create layout
+ll <- CorenessLayout(mouse);
+# plot
+plot(mouse, layout=ll, vertex.size=30, 
+     vertex.color=colbar[coreness], 
+     vertex.frame.color=colbar[coreness], main='Mouse Coreness');
+```
+
+```{r}
+plot(mouse, main="Mouse Network Visualization Original")
+```
+
+
+
+
+
+#Rewiring Mouse Network
+
+
+
+```{r}
+keeping_degseq(loops = FALSE, niter = 8000)
+mouse_dummy <- mouse
+mouse_dummy %>%
+  rewire(keeping_degseq(niter = 8000)) %>%
+  degree()
+str(rewire(g, with = keeping_degseq(niter = 
+                                      vcount(mouse_dummy) * 10)))
+```
+
+
+```{r}
+plot(mouse, main="Reqired Mouse Network Visualization")
+
+```
+
+
+```{r}
+clust<- transitivity(mouse, type="weighted")
+plot(clust, pch=20, cex=1, col="brown", xlab="No. of Nodes ",
+ylab = "Clustering Coefficient ", 
+main = "Mouse - Clustering Coefficient Distribution")
+lines(clust)
+
+```
+#Strength Measure for Worm Network
+
+```{r}
+worm_strength<- strength(G, vids = V(G), mode = "all",
+  loops = TRUE)
+which.max(worm_strength)
+```
+
+
+```{r}
+plot(worm_strength, ylab = "Strength", 
+     xlab = "Node ID", 
+     main = "C. Elegans Worm - Node Strength Plot", col= "red", type="h")
+lines(worm_strength)
+```
+
+#Strength Measure for Mouse Network
+
+```{r}
+mouse_strength<- strength(mouse, 
+                          vids = V(mouse), mode = "all",
+  loops = TRUE)
+
+mouse_strength
+```
+
+
+
+```{r}
+
+plot(mouse_strength, ylab = "Strength", 
+     xlab = "Node ID", main = "Mouse - Node Strength Plot", 
+     col= "red", type="h")
+lines(mouse_strength)
+```
+
+
+#Max-Flow
+
+```{r}
+
+g1 <- graph_from_data_frame(as.data.frame(celegans_other))
+
+worm_maxflow<- max_flow(g1, source=V(g1)["1"], target=V(g1)["2"])
+worm_maxflow
+```
+
+```{r}
+
+plot(worm_maxflow$cut, xlab = "CUT - MaxFlow", 
+     ylab = "Edges", main = "C. Elegans Worm Max-Flow Plot", 
+     col= "brown", type="h")
+lines(worm_maxflow$cut)
+```
+
+
+
+
+```{r}
+worm_central<- centr_clo(G, 
+                         mode = c("out", "in", "all", "total"), 
+                         normalized = TRUE)
+mean(worm_central$res)
+```
+```{r}
+
+plot(worm_central$res, xlab = "Nodes", ylab = "Strength", 
+     main = "C. Elegans Worm - Closeness Centrality", 
+     col= "blue", type="b")
+lines(worm_central$res)
+```
+
+#Page Rank Measure
+
+```{r}
+p<- page_rank(G, algo = c("prpack"), vids = V(G),
+  directed = TRUE, damping = 0.85, 
+  personalized = NULL, weights = NULL,
+  options = NULL)
+mean(p$vector)
+#sort(p$vector, decreasing = TRUE)
+
+```
+
+
+
+```{r}
+
+plot(p$vector, ylab = "Page Rank", 
+     xlab = "Node ID", main = "C. Elegans Worm Page Rank Plot", 
+     col= "red", type="b")
+lines(p$vector)
+```
+
+#Betweenness Meaure
+
+
+```{r}
+worm_betweenness<- betweenness(G, v = V(G), 
+                               directed = TRUE, weights = NULL,
+                               nobigint = TRUE, normalized = FALSE)
+
+plot(worm_betweenness, ylab = "Betweenness", xlab = "Node ID", 
+     main = "C. Elegans Worm Betweenness Plot", col= "red", type="h")
+lines(worm_betweenness)
+sort(worm_betweenness, decreasing = TRUE)
+```
+
+```{r}
+worm_closeness<- estimate_closeness(G, vids = V(G), 
+                                    mode = c("in"), cutoff="0", 
+                                    weights = NULL, 
+                                    normalized = FALSE)
+
+plot(worm_closeness, ylab = "Closeness", xlab = "Node ID", 
+     main = "C. Elegans Worm Closeness Plot", col= "red", type="b")
+lines(worm_closeness)
+```
+
+
+#Authority Score:
+
+```{r}
+worm_authority<- authority_score(G, scale = TRUE, weights = NULL,
+  options = arpack_defaults)
+mean(worm_authority$vector)
+plot(worm_authority$vector, 
+     ylab = "Authority Score", xlab = "Node ID", 
+     main = "C. Elegans Worm Authority Score Plot", 
+     col= "red", type="h")
+lines(worm_authority$vector)
+```
+#Hub Score:
+
+
+```{r}
+worm_hub<- hub_score(G, scale = TRUE, 
+                     weights = NULL, options = arpack_defaults)
+mean(worm_hub)
+plot(worm_hub$vector, ylab = "Hub Score", 
+     xlab = "Node ID", 
+     main = "C. Elegans Worm Hub Score", col= "red", type="h")
+lines(worm_hub$vector)
+```
+
+#Modularity Score
+
+```{r}
+g <- G
+wtc <- cluster_walktrap(g)
+modularity(wtc)
+modularity(g, membership(wtc))
+```
+
+
+```{r}
+g1 <- graph_from_data_frame(as.data.frame(mouse_raw))
+
+mouse_maxflow<- max_flow(g1, source=V(g1)["1"], 
+                         target=V(g1)["2"])
+
+
+plot(mouse_maxflow$cut, 
+     ylab = "Edges", xlab = "Max-Flow", 
+     main = "Mouse - Max Flow Plot", 
+     col= "red", type="h")
+lines(mouse_maxflow$cut)
+```
+
+
+
+```{r}
+mouse_closeness<- estimate_closeness(mouse, vids = V(mouse), 
+                                     mode = c("in"), cutoff="0", 
+                                     weights = NULL, 
+                                     normalized = FALSE)
+mean(mouse_closeness)
+plot(mouse_closeness, ylab = "Closeness measure", 
+     xlab = "Node ID", main = "Mouse Closeness Plot", 
+     col= "red", type="h")
+lines(mouse_closeness)
+
+```
+
+```{r}
+p<- page_rank(mouse, algo = c("prpack"), vids = V(mouse),
+  directed = TRUE, damping = 0.85, personalized = NULL, weights = NULL,
+  options = NULL)
+
+sort(p$vector, decreasing = TRUE)
+plot(p$vector, ylab = "Page Rank", 
+     xlab = "Node ID", main = "Mouse - Page Rank Plot", 
+     col= "red", type="h")
+lines(p$vector)
+
+```
+
+
+```{r}
+mouse_betwenness<- betweenness(mouse, v = V(mouse), 
+                               directed = TRUE, weights = NULL,
+  nobigint = TRUE, normalized = FALSE)
+
+plot(mouse_betwenness, ylab = "Betweenness", 
+     xlab = "Node ID", main = "Mouse Betweenness Plot", 
+     col= "red", type="h")
+lines(mouse_betwenness)
+```
+
+```{r}
+mouse_authority<- authority_score(mouse, scale = TRUE, weights = NULL,
+  options = arpack_defaults)
+mean(mouse_authority$vector)
+plot(mouse_authority$vector, 
+     ylab = "Mouse Authority Score", xlab = "Node ID", 
+     main = "Mouse Authority", col= "red", type="h")
+lines(mouse_authority$vector)
+```
+```{r}
+mouse_hub<- hub_score(mouse, scale = TRUE, 
+                      weights = NULL, 
+                      options = arpack_defaults)
+
+plot(mouse_hub$vector, ylab = "Hub Score", 
+     xlab = "Node ID", main = "Mouse Hub Score", 
+     col= "red", type="h")
+lines(mouse_hub$vector)
+```
+#Modularity:
+
+```{r}
+g <- mouse
+wtc <- cluster_walktrap(g)
+modularity(wtc)
+
+
+```
+
+
+
+
+
+
